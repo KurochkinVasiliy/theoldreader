@@ -26,8 +26,6 @@ print("starred - ", len(starred))
 
 #### changing status
 ```Python
-clean_up_list = liked + starred + shared
-
 
 for item in unread:
 	item.get_details()
