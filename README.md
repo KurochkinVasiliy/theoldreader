@@ -6,12 +6,12 @@ https://github.com/theoldreader/api
 ## usage example
 
 #### establishing connection, getting auth_code
-```
+```Python
 conn = TheOldReaderConnection('application_name', 'email', 'password')
 print(conn.auth_code)
 ```
 #### searching among items
-```
+```Python
 search = theoldreader.TheOldReaderItemsSearch(conn.header)
 unread = search.get_unread_only()
 liked = search.get_liked_only()
@@ -25,7 +25,7 @@ print("starred - ", starred.__len__())
 ```
 
 #### changing status
-```
+```Python
 clean_up_list = liked + starred + shared
 
 
