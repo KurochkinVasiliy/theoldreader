@@ -18,10 +18,10 @@ liked = search.get_liked_only()
 shared = search.get_shared_only()
 starred = search.get_starred_only()
 
-print("unread - ", unread.__len__())
-print("liked - ", liked.__len__())
-print("shared - ", shared.__len__())
-print("starred - ", starred.__len__())
+print("unread - ",  len(unread))
+print("liked - ", len(liked))
+print("shared - ", len(shared))
+print("starred - ", len(starred))
 ```
 
 #### changing status
