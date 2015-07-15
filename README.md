@@ -12,7 +12,7 @@ print(conn.auth_code)
 ```
 #### searching among items
 ```Python
-search = theoldreader.TheOldReaderItemsSearch(conn.header)
+search = theoldreader.TheOldReaderItemsSearch(conn)
 unread = search.get_unread_only()
 liked = search.get_liked_only()
 shared = search.get_shared_only()
