@@ -7,9 +7,15 @@ https://github.com/theoldreader/api
 
 #### establishing connection, getting auth_code
 ```Python
-conn = TheOldReaderConnection('application_name', 'email', 'password')
+conn = TheOldReaderConnection('email', 'password', 'application_name')
+conn.login()
 print(conn.auth_code)
 ```
+or
+```Python
+conn = TheOldReaderConnection('email', 'password', 'application_name')
+```
+and just go ahead and use it. It will try to login when before making a request
 #### searching among items
 ```Python
 search = theoldreader.TheOldReaderItemsSearch(conn)
