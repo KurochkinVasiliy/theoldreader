@@ -1,8 +1,6 @@
 __author__ = 'Qra'
 
-import urllib.request
-import urllib.parse
-import json
+import requests
 import logging
 logger = logging.getLogger(__name__)
 
@@ -13,16 +11,14 @@ url_login = 'https://theoldreader.com/accounts/ClientLogin'
 def make_request(url, var, header={}, use_get=True):
     var_json = {'output': 'json'}
     var_json.update(var)
-    encoded = urllib.parse.urlencode(var_json)
+    #encoded = urllib.parse.urlencode(var_json)
     data = None
     if use_get:
-        url = url + '?' + encoded
+        response = requests.get(url, params=var_json, headers=header)
     else:
-        data = encoded.encode('utf-8')  # data should be bytes
-    req = urllib.request.Request(url, data=data, headers=header)
-    response = urllib.request.urlopen(req)
-    the_page = response.read()
-    return json.loads(the_page.decode("utf-8"))
+        response = requests.post(url, data=var_json, headers=header)
+    response.raise_for_status()
+    return response.json()
 
 
 class TheOldReaderConnection(object):
