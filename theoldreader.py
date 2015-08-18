@@ -3,12 +3,11 @@ __version__ = "0.1.0a0"
 
 import requests
 import logging
+
 logger = logging.getLogger(__name__)
 
 url_api = 'https://theoldreader.com/reader/api/0/'
 url_login = 'https://theoldreader.com/accounts/ClientLogin'
-
-logger = logging.getLogger(__name__)
 
 
 class TheOldReaderConnection(object):
@@ -21,7 +20,6 @@ class TheOldReaderConnection(object):
         self.password = password
         self.header = {'user-agent': "TORPythonAPI/" + __version__}
         self.auth_code = None
-
 
     def make_request(self, url, var, use_get=True):
         """
@@ -55,7 +53,6 @@ class TheOldReaderConnection(object):
         response.raise_for_status()
         return response.json()
 
-
     def login(self, username=None, password=None):
         """
         Login in and retrieve api token
@@ -87,11 +84,9 @@ class TheOldReaderConnection(object):
 
 
 class TheOldReaderItem(object):
-
     def __init__(self, connection, item_id):
         """
         Initialize object
-
         :param connection: The corresponding connection
         :type connection: TheOldReaderConnection
         :param item_id: Id of item
@@ -104,13 +99,13 @@ class TheOldReaderItem(object):
         self.content = None
         self.href = None
 
-    def _make_api_request(self, url_end, var):
-        return self.connection.make_request(url_api + url_end, var)
+    # TODO: No use_get
+    def _make_api_request(self, url_end, var, use_get=True):
+        return self.connection.make_request(url_api + url_end, var, use_get)
 
     def _make_edit_request(self, state, undo=False, additional_var=None):
         """
         Make request to api for this item
-
         :param state: Which attribute to change (read, starred, like, ..)
         :type state: str
         :param undo: If true, undos the state (Unread, remove starred, ..)
@@ -122,7 +117,7 @@ class TheOldReaderItem(object):
         :rtype: None | int | float | str | list | dict
         """
         var = {
-            'a': 'user/-/state/com.google/' + state
+            'i': self.item_id
         }
 
         if undo:
@@ -131,7 +126,7 @@ class TheOldReaderItem(object):
             var['a'] = 'user/-/state/com.google/' + state
         if additional_var:
             var.update(additional_var)
-        return self._make_api_request('edit-tag', var)
+        return self._make_api_request('edit-tag', var, False)
 
     # Mark as read
     def mark_as_read(self):
@@ -189,7 +184,6 @@ class TheOldReaderItemsSearch(object):
     def __init__(self, connection):
         """
         Initialize object
-
         :param connection: The corresponding connection
         :type connection: TheOldReaderConnection
         :rtype: None
