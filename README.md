@@ -7,12 +7,12 @@ https://github.com/theoldreader/api
 
 #### establishing connection, getting auth_code
 ```Python
-conn = TheOldReaderConnection('application_name', 'email', 'password')
+conn = theoldreader.Connection('application_name', 'email', 'password')
 print(conn.auth_code)
 ```
 #### searching among items
 ```Python
-search = theoldreader.TheOldReaderItemsSearch(conn)
+search = theoldreader.ItemsSearch(conn)
 unread = search.get_unread_only()
 liked = search.get_liked_only()
 shared = search.get_shared_only()
