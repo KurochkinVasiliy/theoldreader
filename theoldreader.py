@@ -4,6 +4,7 @@ import urllib.request
 import urllib.parse
 import json
 import logging
+
 logger = logging.getLogger(__name__)
 
 url_api = 'https://theoldreader.com/reader/api/0/'
@@ -22,7 +23,12 @@ def make_request(url, var, header={}, use_get=True):
     req = urllib.request.Request(url, data=data, headers=header)
     response = urllib.request.urlopen(req)
     the_page = response.read()
-    return json.loads(the_page.decode("utf-8"))
+
+    try:
+        result = json.loads(the_page.decode("utf-8"))
+    except ValueError:
+        result = None
+    return result
 
 
 class TheOldReaderConnection(object):
@@ -40,11 +46,9 @@ class TheOldReaderConnection(object):
 
 
 class TheOldReaderItem(object):
-
     def __init__(self, connection, item_id):
         """
         Initialize object
-
         :param connection: The corresponding connection
         :type connection: TheOldReaderConnection
         :param item_id: Id of item
@@ -57,13 +61,12 @@ class TheOldReaderItem(object):
         self.content = None
         self.href = None
 
-    def _make_api_request(self, url_end, var):
-        return make_request(url_api + url_end, var, self.connection.header)
+    def _make_api_request(self, url_end, var, use_get=True):
+        return make_request(url_api + url_end, var, self.connection.header, use_get)
 
     def _make_edit_request(self, state, undo=False, additional_var=None):
         """
         Make request to api for this item
-
         :param state: Which attribute to change (read, starred, like, ..)
         :type state: str
         :param undo: If true, undos the state (Unread, remove starred, ..)
@@ -75,7 +78,7 @@ class TheOldReaderItem(object):
         :rtype: None | int | float | str | list | dict
         """
         var = {
-            'a': 'user/-/state/com.google/' + state
+            'i': self.item_id
         }
 
         if undo:
@@ -84,7 +87,7 @@ class TheOldReaderItem(object):
             var['a'] = 'user/-/state/com.google/' + state
         if additional_var:
             var.update(additional_var)
-        return self._make_api_request('edit-tag', var)
+        return self._make_api_request('edit-tag', var, False)
 
     # Mark as read
     def mark_as_read(self):
@@ -141,7 +144,6 @@ class TheOldReaderItemsSearch(object):
     def __init__(self, connection):
         """
         Initialize object
-
         :param connection: The corresponding connection
         :type connection: TheOldReaderConnection
         :rtype: None
