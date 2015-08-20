@@ -10,7 +10,7 @@ url_api = 'https://theoldreader.com/reader/api/0/'
 url_login = 'https://theoldreader.com/accounts/ClientLogin'
 
 
-class TheOldReaderConnection(object):
+class Connection(object):
     """ Connection to TheOldReader API  """
 
     def __init__(self, email, password, client="TORPythonAPI"):
@@ -83,7 +83,8 @@ class TheOldReaderConnection(object):
         self._logger.info(u"Logged in as {}".format(username))
 
 
-class TheOldReaderItem(object):
+class Item(object):
+
     def __init__(self, connection, item_id):
         """
         Initialize object
@@ -179,7 +180,7 @@ class TheOldReaderItem(object):
         self.href = item_det['alternate'][0]['href']
 
 
-class TheOldReaderItemsSearch(object):
+class ItemsSearch(object):
 
     def __init__(self, connection):
         """
@@ -207,7 +208,7 @@ class TheOldReaderItemsSearch(object):
             continuation = resp.get('continuation')
             items_list.extend(resp['itemRefs'])
         return [
-            TheOldReaderItem(self.connection, item.get('id'))
+            Item(self.connection, item.get('id'))
             for item in items_list
         ]
 
