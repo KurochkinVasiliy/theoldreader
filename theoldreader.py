@@ -1,8 +1,7 @@
 __author__ = 'Qra'
+__version__ = "0.1.0a0"
 
-import urllib.request
-import urllib.parse
-import json
+import requests
 import logging
 
 logger = logging.getLogger(__name__)
@@ -11,41 +10,81 @@ url_api = 'https://theoldreader.com/reader/api/0/'
 url_login = 'https://theoldreader.com/accounts/ClientLogin'
 
 
-def make_request(url, var, header={}, use_get=True):
-    var_json = {'output': 'json'}
-    var_json.update(var)
-    encoded = urllib.parse.urlencode(var_json)
-    data = None
-    if use_get:
-        url = url + '?' + encoded
-    else:
-        data = encoded.encode('utf-8')  # data should be bytes
-    req = urllib.request.Request(url, data=data, headers=header)
-    response = urllib.request.urlopen(req)
-    the_page = response.read()
-
-    try:
-        result = json.loads(the_page.decode("utf-8"))
-    except ValueError:
-        result = None
-    return result
-
-
 class Connection(object):
-    def __init__(self, client, email, password):
+    """ Connection to TheOldReader API  """
+
+    def __init__(self, email, password, client="TORPythonAPI"):
+        self._logger = logging.getLogger(__name__ + ".TheOldReaderConnection")
+        self.client = client
+        self.email = email
+        self.password = password
+        self.header = {'user-agent': "TORPythonAPI/" + __version__}
+        self.auth_code = None
+
+    def make_request(self, url, var, use_get=True):
+        """
+        Make request to url (if not loggedin -> tries to)
+
+        :param url: Url to load
+        :type url: str
+        :param var: Additional information for request (get or post data)
+        :type var: dict
+        :param use_get: Use http GET (default: True) (alternative: POST)
+        :type use_get: bool
+        :return: Response from server
+        :rtype: None | int | float | str | list | dict
+        """
+        if self.auth_code is None:
+            self.login()
+
+        header = {}
+        if self.auth_code:
+            header['Authorization'] = "GoogleLogin auth=" + self.auth_code
+        header.update(self.header)
+
+        var_json = {'output': 'json'}
+        var_json.update(var)
+
+        if use_get:
+            response = requests.get(url, params=var_json, headers=header)
+        else:
+            response = requests.post(url, data=var_json, headers=header)
+
+        response.raise_for_status()
+        return response.json()
+
+    def login(self, username=None, password=None):
+        """
+        Login in and retrieve api token
+
+        :param username: Username or email (default: None)
+            if not set, use internal
+        :type username: str
+        :param password: Password (default: None)
+            if not set, use internal
+        :type password: str
+        :rtype: None
+        """
+        if not username:
+            username = self.email
+        if not password:
+            password = self.password
         var = {
-            'client': client,
+            'client': self.client,
             'accountType': 'HOSTED_OR_GOOGLE',
             'service': 'reader',
-            'Email': email,
+            'Email': username,
             'Passwd': password
         }
-        resp1 = make_request(url_login, var, use_get=False)
+        # do login
+        self.auth_code = ""
+        resp1 = self.make_request(url_login, var, use_get=False)
         self.auth_code = resp1['Auth']
-        self.header = {'Authorization': "GoogleLogin auth=" + self.auth_code}
+        self._logger.info(u"Logged in as {}".format(username))
 
 
 class Item(object):
+
     def __init__(self, connection, item_id):
         """
         Initialize object
@@ -61,8 +100,9 @@ class Item(object):
         self.content = None
         self.href = None
 
+    # TODO: No use_get
     def _make_api_request(self, url_end, var, use_get=True):
-        return make_request(url_api + url_end, var, self.connection.header, use_get)
+        return self.connection.make_request(url_api + url_end, var, use_get)
 
     def _make_edit_request(self, state, undo=False, additional_var=None):
         """
@@ -141,6 +181,7 @@ class Item(object):
 
 
 class ItemsSearch(object):
+
     def __init__(self, connection):
         """
         Initialize object
@@ -152,11 +193,10 @@ class ItemsSearch(object):
 
     def _make_search_request(self, var, limit_items=1000):
         var['n'] = limit_items
-        return make_request(
+        return self.connection.make_request(
             url_api + 'stream/items/ids',
             var,
-            self.connection.header,
-            True
+            use_get=True
         )
 
     def _load_rest(self, continuation, var, limit_items=1000, items_list=None):
