@@ -51,7 +51,11 @@ class Connection(object):
             response = requests.post(url, data=var_json, headers=header)
 
         response.raise_for_status()
-        return response.json()
+        try:
+            result = response.json()
+        except ValueError:
+            result = None
+        return result
 
     def login(self, username=None, password=None):
         """
