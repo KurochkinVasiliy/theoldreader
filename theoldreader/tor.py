@@ -44,7 +44,8 @@ class Connection(object):
 
         var_json = {'output': 'json'}
         var_json.update(var)
-
+        for param in var:
+            self._logger.debug(param + ":" + str(var[param]))
         if use_get:
             response = requests.get(url, params=var_json, headers=header)
         else:
@@ -103,6 +104,8 @@ class Item(object):
         self.title = None
         self.content = None
         self.href = None
+        self.mediaUrl = None
+        self.published = None
 
     # TODO: No use_get
     def _make_api_request(self, url_end, var, use_get=True):
@@ -181,8 +184,12 @@ class Item(object):
         item_det = resp3['items'][0]
         self.title = item_det['title']
         self.content = item_det['summary']['content']
+        self.published = item_det['published']
         self.href = item_det['alternate'][0]['href']
-
+        if 'enclosure' in item_det:
+            self.mediaUrl = item_det['enclosure'][0]['href']
+        self.source = resp3['title']
+        self.source_id = resp3['id']
 
 class ItemsSearch(object):
 
@@ -216,11 +223,13 @@ class ItemsSearch(object):
             for item in items_list
         ]
 
-    def get_unread_only(self, limit_items=1000):
+    def get_unread_only(self, limit_items=1000, feed=None):
         var = {
             's': 'user/-/state/com.google/reading-list',
             'xt': 'user/-/state/com.google/read'
         }
+        if (feed!=None):
+            var['s'] = feed
         resp = self._make_search_request(var, limit_items)
         continuation = resp.get('continuation')
         items_list = resp.get('itemRefs', [])
@@ -252,3 +261,40 @@ class ItemsSearch(object):
         continuation = resp.get('continuation')
         items_list = resp.get('itemRefs', [])
         return self._load_rest(continuation, var, limit_items, items_list)
+    
+class Subscriptions (object):
+    def __init__(self, connection):
+        """
+        Initialize object
+        :param connection: The corresponding connection
+        :type connection: TheOldReaderConnection
+        :rtype: None
+        """
+        self.connection = connection
+        self.id = None
+        self.title = None
+        self.iconUrl = None
+        self.firstitemmsec = None
+        
+    def get_all(self, limit_items=1000):
+        var = {
+            
+        }
+        var['n'] = limit_items
+        response = self.connection.make_request(
+            url_api + 'subscription/list',
+            var,
+            use_get=True
+        )
+        list = []
+        for feed in response['subscriptions']:
+            s = Subscriptions(self.connection)
+            s.id =  feed['id']
+            s.title = feed['title']
+            s.iconUrl = 'http:' + feed['iconUrl']
+            s.firstitemmsec = feed['firstitemmsec']
+            
+            list.append(s)
+        
+        return list
+        
